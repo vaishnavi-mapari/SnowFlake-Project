@@ -1,0 +1,1916 @@
+null.US02769
+null.US02769
+https://us02769.ap-southeast-2.snowflakecomputing.com
+https://us02769.ap-southeast-2.snowflakecomputing.com
+
+
+======================================Session1========================================================
+create database student;
+create schema student_schema;
+create table students (Roll_no number, First_name char(20), Last_name char(20), Marks number);
+insert into students values (1,'Ram','Sharma',80),(2,'Joyti','Ponde',90),(3,'Rahul','Varma',60),(4,'Radha','Sharma',70),(5,'Joyti','Varma',80),(6,'Aamal','Sharma',50);
+select * from students;
+delete from students where Marks=60;
+select * from students;
+update students
+set First_name='Rahul'
+where Roll_no=1;
+select * from students;
+desc table students;
+
+=============================================
+==============================================Session2-T1==========================================================
+use role sysadmin;
+use role accountadmin;
+grant usage on warehouse compute_wh to sysadmin;
+grant usage on database student to sysadmin;
+use role sysadmin;
+use role accountadmin;
+grant usage on schema STUDENT.STUDENT_SCHEMA to sysadmin;
+use role sysadmin;
+use role accountadmin;
+grant select on table STUDENT.STUDENT_SCHEMA.STUDENTS to sysadmin;
+use role sysadmin;
+use role accountadmin;
+grant all on table STUDENT.STUDENT_SCHEMA.STUDENTS to sysadmin;
+select * from STUDENT.STUDENT_SCHEMA.STUDENTS;
+create or replace role diems_role;
+grant usage on warehouse compute_wh to role diems_role;
+grant usage on database STUDENT to role diems_role;
+grant usage on schema STUDENT.STUDENT_SCHEMA to role diems_role;
+grant all on table STUDENT.STUDENT_SCHEMA.STUDENTS to diems_role;
+grant role diems_role to user Vaishnavi13;
+use role diems_role;
+
+insert into STUDENT.STUDENT_SCHEMA.STUDENTS values (7,'Ram','Chavan',50),(8,'Rutuja','Sarkate',90);
+desc table STUDENT.STUDENT_SCHEMA.STUDENTS ;
+select * from STUDENT.STUDENT_SCHEMA.STUDENTS ;
+use role accountadmin;
+select * from STUDENT.STUDENT_SCHEMA.STUDENTS ;
+use role diems_role;
+update STUDENT.STUDENT_SCHEMA.STUDENTS set first_name='Gita' where roll_no=7;
+delete from STUDENT.STUDENT_SCHEMA.STUDENTS where roll_no=4;
+use role accountadmin;
+select * from STUDENT.STUDENT_SCHEMA.STUDENTS ;
+
+
+=============================================session2-T2==================================================================
+
+--Types fo Table--
+use role diems_role;
+use database student;
+use schema student.student_schema;
+
+create TEMPORARY TABLE teachers (id number,first_name varchar(20),last_name varchar(20));
+insert into teachers values (02,'Amrita','Karat'),(03,'Rathod','Sir');
+select * from teachers;
+
+create TEMPORARY TABLE STUDENT1 as select * from students;
+select * from student1;
+
+use role accountadmin;
+create transient database transient_database;
+create or replace schema transient_schema1;
+create table normal_table (name varchar(90));
+
+use database student;
+create or replace transient schema stu_schema1;
+
+create or replace table per_student as select * from student.student_schema.students limit 3;
+create or replace transient table tran_student as select * from per_student limit 5;
+select * from per_student;
+select * from tran_student;
+drop table per_student;
+alter table tran_student rename to per_student;
+
+--Views--
+create or replace view first_view as select roll_no,first_name from student.student_schema.students where marks > 70;
+create or replace materialized view materialized_view1 as select count(marks) as Total_marks from student.student_schema.students ;
+select * from first_view;
+select * from materialized_view;
+select * from materialized_view1;
+
+use role accountadmin;
+use database student;
+use schema student_schema;
+create or replace secure materialized view secure_MV as select * from student.student_schema.students;
+grant all on view secure_mv to diems_role;
+use role diems_role;
+insert into students values (01,'Amrita','Karat',50),(02,'Rathod','Sir',70);
+update students set first_name='Ram' where roll_no=1;
+delete from STUDENT.STUDENT_SCHEMA.STUDENTS where roll_no=1;
+select * from secure_mv;
+
+use role sysadmin;
+
+
+=================================Session3-T1-TimeTravel=================================================================
+
+use database student;
+use schema student_schema;
+select * from student.student_schema.students;
+update students set first_name='Ram' where last_name='Sir';
+update students set last_name='Khan' where roll_no=8;
+select * from students at (offset => -120);
+delete from students where roll_no=3;
+select current_timestamp;
+select * from students at (timestamp => '2024-07-02 22:46:21.548 -0700' ::timestamp);
+insert into students values (01,'Ram','Khan',40),(03,'Rutuja','Khana',80);
+select * from students before( statement => '01b56a4c-3202-abb4-0001-d776000120b6' );
+
+
+--Time_travel for Table,Schema and database--
+
+create or replace table time.time_travel.time_travel_ex (id number, name string)
+DATA_RETENTION_TIME_IN_DAYS = 1;
+
+select * from time_travel_ex;
+
+create or replace schema time.time_travel
+DATA_RETENTION_TIME_IN_DAYS = 1;
+
+create or replace database time
+DATA_RETENTION_TIME_IN_DAYS = 1;
+
+insert into time.time_travel.time_travel_ex values (1,'Ram Kumar'),(2,'Aryan Khana'),(3,'Rutuja Sarkate');
+
+drop table student.student_schema.time_travel_ex;
+drop schema student.stu_schema1;
+drop database TRANSIENT_DATABASE;
+drop database student;
+undrop database student;
+
+select * from time.time_travel.time_travel_ex;
+select * from student.student_schema.students;
+
+
+================================Session3-T2-Inteernal Stages===========================================
+
+Microsoft Windows [Version 10.0.22631.3810]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\HP>snowsql
+Usage: snowsql [OPTIONS]
+
+Options:
+  -a, --accountname TEXT          Name assigned to your Snowflake account. If
+                                  you are not on us-west-2 or AWS deployement,
+                                  append the region and platform to the end,
+                                  e.g., <account>.<region> or
+                                  <account>.<region>.<platform>Honors
+                                  $SNOWSQL_ACCOUNT.
+
+  -u, --username TEXT             Username to connect to Snowflake. Honors
+                                  $SNOWSQL_USER.
+
+  -d, --dbname TEXT               Database to use. Honors $SNOWSQL_DATABASE.
+  -s, --schemaname TEXT           Schema in the database to use. Honors
+                                  $SNOWSQL_SCHEMA.
+
+  -r, --rolename TEXT             Role name to use. Honors $SNOWSQL_ROLE.
+  -w, --warehouse TEXT            Warehouse to use. Honors $SNOWSQL_WAREHOUSE.
+  -h, --host TEXT                 Host address for the connection. Honors
+                                  $SNOWSQL_HOST.
+
+  -p, --port INTEGER              Port number for the connection. Honors
+                                  $SNOWSQL_PORT.
+
+  --region TEXT                   (DEPRECATED) Append the region or any sub
+                                  domains before snowflakecomputing.com to the
+                                  end of accountname parameter after a dot.
+                                  e.g., accountname=<account>.<region>
+
+  -m, --mfa-passcode TEXT         Token to use for multi-factor authentication
+                                  (MFA)
+
+  --mfa-passcode-in-password      Appends the MFA passcode to the end of the
+                                  password.
+
+  --abort-detached-query          Aborts a query if the connection between the
+                                  client and server is lost. By default, it
+                                  won't abort even if the connection is lost.
+
+  --probe-connection              Test connectivity to Snowflake. This option
+                                  is mainly used to print out the TLS/SSL
+                                  certificate chain.
+
+  --proxy-host TEXT               Proxy server hostname. Honors
+                                  $SNOWSQL_PROXY_HOST.
+
+  --proxy-port INTEGER            Proxy server port number. Honors
+                                  $SNOWSQL_PROXY_PORT.
+
+  --proxy-user TEXT               Proxy server username. Honors
+                                  $SNOWSQL_PROXY_USER. Set $SNOWSQL_PROXY_PWD
+                                  for the proxy server password.
+
+  --authenticator TEXT            Authenticator: 'snowflake',
+                                  'externalbrowser' (to use any IdP and a web
+                                  browser), 'oauth', or
+                                  https://<your_okta_account_name>.okta.com
+                                  (to use Okta natively).
+
+  -v, --version                   Shows the current SnowSQL version, or uses a
+                                  specific version if provided as a value.
+
+  --noup                          Disables auto-upgrade for this run. If no
+                                  version is specified for -v, the latest
+                                  version in ~/.snowsql/ is used.
+
+  -D, --variable TEXT             Sets a variable to be referred by &<var>. -D
+                                  tablename=CENUSTRACKONE or --variable
+                                  db_key=$DB_KEY
+
+  -o, --option TEXT               Set SnowSQL options. See the options
+                                  reference in the Snowflake documentation.
+
+  -f, --filename FILE             File to execute.
+  -q, --query TEXT                Query to execute.
+  --config FILE                   Path and name of the SnowSQL configuration
+                                  file. By default, ~/.snowsql/config.
+
+  -P, --prompt                    Forces a password prompt. By default,
+                                  $SNOWSQL_PWD is used to set the password.
+
+  -M, --mfa-prompt                Forces a prompt for the second token for
+                                  MFA.
+
+  -c, --connection TEXT           Named set of connection parameters to use.
+  --single-transaction            Connects with autocommit disabled. Wraps
+                                  BEGIN/COMMIT around statements to execute
+                                  them as a single transaction, ensuring all
+                                  commands complete successfully or no change
+                                  is applied.
+
+  --private-key-path PATH         Path to private key file in PEM format used
+                                  for key pair authentication. Private key
+                                  file is required to be encrypted and
+                                  passphrase is required to be specified in
+                                  environment variable
+                                  $SNOWSQL_PRIVATE_KEY_PASSPHRASE
+
+  -U, --upgrade                   Force upgrade of SnowSQL to the latest
+                                  version.
+
+  -K, --client-session-keep-alive
+                                  Keep the session active indefinitely, even
+                                  if there is no activity from the user..
+
+  --disable-request-pooling       Disable request pooling. This can help speed
+                                  up connection failover
+
+  --token TEXT                    The token to be used with oauth
+                                  authentication method
+
+  --query_tag TEXT                Tags to be applied to the queries run
+  --generate-jwt                  Generate a jwt token, which will be printed
+                                  out and displayed. Requires values for user,
+                                  account, and private-key-path.
+
+  -?, --help                      Show this message and exit.
+
+C:\Users\HP>snowsql -v
+Version: 1.3.1
+
+C:\Users\HP>snowsql -a IMJRACA.YH39405 -u Vaishnavi13
+Password:
+250001 (n/a): Could not connect to Snowflake backend after 2 attempt(s).Aborting
+If the error message is unclear, enable logging using -o log_level=DEBUG and see the log to find out the cause. Contact support for further help.
+Goodbye!
+
+C:\Users\HP>snowsql -a IMJRACA.YH39405 -u Vaishnavi13
+Password:
+250001 (n/a): Could not connect to Snowflake backend after 2 attempt(s).Aborting
+If the error message is unclear, enable logging using -o log_level=DEBUG and see the log to find out the cause. Contact support for further help.
+Goodbye!
+
+C:\Users\HP>snowsql -a IMJRACA-YH39405 -u Vaishnavi13
+Password:
+* SnowSQL * v1.3.1
+Type SQL statements or !help
+Vaishnavi13#COMPUTE_WH@(no database).(no schema)>use database
+                                                 student
+                                                 ;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 1.704s
+Vaishnavi13#COMPUTE_WH@STUDENT.PUBLIC>use schema
+                                      student_schema
+                                      ;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 0.470s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file:C:\Users\HP\Desktop\SNOWFLAKE\onlinedeliverydata.csv @/staged;
+001003 (42000): SQL compilation error:
+syntax error line 1 at position 4 unexpected 'file'.
+syntax error line 1 at position 10 unexpected ':'.
+parse error line 1 at position 18 near '72'.
+parse error line 1 at position 21 near '68'.
+parse error line 1 at position 29 near '83'.
+parse error line 1 at position 39 near '111'.
+syntax error line 1 at position 57 unexpected '.'.
+syntax error line 1 at position 62 unexpected '@/staged'.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\onlinedeliverydata.csv @~/staged
+                                              ;
++------------------------+---------------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source                 | target                    | source_size | target_size | source_compression | target_compression | status   | message |
+|------------------------+---------------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| onlinedeliverydata.csv | onlinedeliverydata.csv.gz |      238442 |       20784 | NONE               | GZIP
+   | UPLOADED |         |
++------------------------+---------------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 7.144s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>create or replace table food ;
+001003 (42000): SQL compilation error:
+syntax error line 1 at position 29 unexpected ';'.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>create or replace table food ;
+001003 (42000): SQL compilation error:
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\STUDENT1.csv @~/staged;
++--------------+-----------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source       | target          | source_size | target_size | source_compression | target_compression | status   | message |
+|--------------+-----------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| STUDENT1.csv | STUDENT1.csv.gz |         111 |         128 | NONE               | GZIP               | UPLOADED |         |
++--------------+-----------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 4.140s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into students from @~/staged
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
+100080 (22000): Number of columns in file (55) does not match that of the corresponding table (4), use file format option error_on_column_count_mismatch=false to ignore this error
+  File '@~/staged/onlinedeliverydata.csv.gz', line 3, character 1
+  Row 1 starts at line 2, column "STUDENTS"[55]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into students from @~/staged
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
+100080 (22000): Number of columns in file (55) does not match that of the corresponding table (4), use file format option error_on_column_count_mismatch=false to ignore this error
+  File '@~/staged/onlinedeliverydata.csv.gz', line 3, character 1
+  Row 1 starts at line 2, column "STUDENTS"[55]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\STUDENT1.csv @~/staged;
++--------------+-----------------+-------------+-------------+--------------------+--------------------+---------+---------+
+| source       | target          | source_size | target_size | source_compression | target_compression | status  | message |
+|--------------+-----------------+-------------+-------------+--------------------+--------------------+---------+---------|
+| STUDENT1.csv | STUDENT1.csv.gz |         111 |           0 | NONE               | GZIP               | SKIPPED |         |
++--------------+-----------------+-------------+-------------+--------------------+--------------------+---------+---------+
+1 Row(s) produced. Time Elapsed: 3.962s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into students from @~/staged
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
+100080 (22000): Number of columns in file (55) does not match that of the corresponding table (4), use file format option error_on_column_count_mismatch=false to ignore this error
+  File '@~/staged/onlinedeliverydata.csv.gz', line 3, character 1
+  Row 1 starts at line 2, column "STUDENTS"[55]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into students from @~/staged/STUDENT1.csv
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
++------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                   | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| staged/STUDENT1.csv.gz | LOADED |           4 |           4 |           1 |           0 | NULL        |             NULL |                  NULL | NULL                    |
++------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 2.964s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into food from @~/staged/onlinedeliverydata.csv
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
+100080 (22000): Number of columns in file (55) does not match that of the corresponding table (4), use file format option error_on_column_count_mismatch=false to ignore this error
+  File '@~/staged/onlinedeliverydata.csv.gz', line 3, character 1
+  Row 1 starts at line 2, column "FOOD"[55]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\food.csv @~/staged;
++----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source   | target      | source_size | target_size | source_compression | target_compression | status   | message |
+|----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| food.csv | food.csv.gz |       10443 |         832 | NONE               | GZIP               | UPLOADED |         |
++----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 2.069s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into food from @~/staged/food.csv
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
++--------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file               | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|--------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| staged/food.csv.gz | LOADED |         388 |         388 |           1 |           0 | NULL        |             NULL |                  NULL | NULL                    |
++--------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.049s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\food.csv @%tablename;
+002003 (02000): SQL compilation error:
+Stage 'STUDENT.STUDENT_SCHEMA."%TABLENAME"' does not exist or not authorized.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\food.csv @%/tablename;
+001012 (42601): SQL compilation error:
+missing stage name in URL: com.snowflake.sql.common.LiteralSupplier$1@ef1ab1b
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\food.csv @%students;
++----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source   | target      | source_size | target_size | source_compression | target_compression | status   | message |
+|----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| food.csv | food.csv.gz |       10443 |         832 | NONE               | GZIP               | UPLOADED |         |
++----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 1.694s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into students from @%students
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
+100038 (22018): Numeric value 'Student' is not recognized
+  File '@STUDENTS/food.csv.gz', line 2, character 18
+  Row 1, column "STUDENTS"["MARKS":4]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\food.csv @%delivery;
++----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source   | target      | source_size | target_size | source_compression | target_compression | status   | message |
+|----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| food.csv | food.csv.gz |       10443 |         832 | NONE               | GZIP               | UPLOADED |         |
++----------+-------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 1.988s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>copy into delivery from @%delivery
+                                              file_format =(type='csv' field_delimiter=',',skip_header = 1);
++-------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file        | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|-------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| food.csv.gz | LOADED |         388 |         388 |           1 |           0 | NULL        |             NULL |                  NULL | NULL                    |
++-------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.065s
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>list @%cli delivery;
+001003 (42000): SQL compilation error:
+syntax error line 1 at position 19 unexpected ';'.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>list @%cli delivery
+                                              ;
+001003 (42000): SQL compilation error:
+syntax error line 2 at position 0 unexpected ';'.
+Vaishnavi13#COMPUTE_WH@STUDENT.STUDENT_SCHEMA>
+
+
+--Stages==Type of internal stage--
+use database student;
+use schema student_schema;
+create or replace table student.student_schema.delivery (Age number, Gender varchar(50), Marital_Status varchar(50),Occupation varchar(100));
+select * from food;
+select * from delivery;
+
+
+=======================================Session4-T1=============================================
+
+CREATE FILE FORMAT csv load format1
+
+TYPE = 'CSV'
+
+COMPRESSION = 'AUTO'
+
+FIELD DELIMITER =
+
+RECORD_DELIMITER = '\n
+
+SKIP HEADER =1
+
+FIELD_OPTIONALLY ENCLOSED BY = '\042'
+
+TRIM_SPACE = FALSE
+
+ERROR_ON_COLUMN COUNT MISMATCH = TRUE
+
+ESCAPE = 'NONE'
+
+ESCAPE_UNENCLOSED_FIELD = '\134'
+
+DATE_FORMAT = 'AUTO'
+
+TIMESTAMP FORMAT = 'AUTO';
+
+
+
+create or replace database Stage1;
+create or replace schema Stage1_schema;
+create or replace table sales (Transaction_ID number,Dates Date,Product_Category varchar(50),Product_Name varchar(500),Units_Sold number,	Unit_Price float,Total_Revenue float,Region varchar(50),Payment_Method varchar(50)); 
+select * from sales;
+create or replace file format My_format
+TYPE = 'CSV'
+COMPRESSION = 'AUTO'
+FIELD_DELIMITER = ','
+RECORD_DELIMITER = '\n'
+SKIP_HEADER = 1
+FIELD_OPTIONALLY_ENCLOSED_BY = '\042'
+TRIM_SPACE = FALSE
+ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
+ESCAPE = 'NONE'
+ESCAPE_UNENCLOSED_FIELD = '\134'
+DATE_FORMAT = 'AUTO'
+TIMESTAMP_FORMAT = 'AUTO';
+
+C:\Users\HP>snowsql -a IMJRACA-YH39405 -u Vaishnavi13
+Password:
+* SnowSQL * v1.3.1
+Type SQL statements or !help
+Vaishnavi13#COMPUTE_WH@(no database).(no schema)>use database
+                                                 stage1;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 2.018s
+Vaishnavi13#COMPUTE_WH@STAGE1.PUBLIC>use schema stage1_schema;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 0.246s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>create or replace stage my_stage
+                                            file_format = My_format;
++-------------------------------------------+
+| status                                    |
+|-------------------------------------------|
+| Stage area MY_STAGE successfully created. |
++-------------------------------------------+
+1 Row(s) produced. Time Elapsed: 2.752s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\sales_data.csv @my_stage;
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source         | target            | source_size | target_size | source_compression | target_compression | status   | message |
+|----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| sales_data.csv | sales_data.csv.gz |       21745 |        6752 | NONE               | GZIP               | UPLOADED |         |
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 14.274s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @my_stage;
+100074 (54000): User character length limit (50) exceeded by string 'Sapiens: A Brief History of Humankind by Yuval Noah Harari'
+  File 'sales_data.csv.gz', line 113, character 24
+  Row 112, column "SALES"["PRODUCT_NAME":4]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @my_stage;
++----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                       | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| my_stage/sales_data.csv.gz | LOADED |         240 |         240 |           1 |           0 | NULL        |
+  NULL |                  NULL | NULL                    |
++----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 2.752s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>
+
+
+=========================================Session4-T2=======================================================
+
+use database stage1;
+use schema stage1_schema;
+
+--Loading data by named-stage --
+create or replace table restaurant (CustomerID number,Age number,Gender varchar(500),Income int,VisitFrequency varchar(500),	AverageSpend float,PreferredCuisine varchar(500),TimeOfVisit varchar(500),GroupSize	number,DiningOccasion varchar(500),MealType	varchar(500),OnlineReservation number,DeliveryOrder number,	LoyaltyProgramMember number,WaitTime float,	ServiceRating number,FoodRating	number,AmbianceRating number,HighSatisfaction number);
+
+create or replace file format My_format
+TYPE = 'CSV'
+COMPRESSION = 'AUTO'
+FIELD_DELIMITER = ','
+RECORD_DELIMITER = '\n'
+SKIP_HEADER = 1
+FIELD_OPTIONALLY_ENCLOSED_BY = '\042'
+TRIM_SPACE = FALSE
+ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
+ESCAPE = 'NONE'
+ESCAPE_UNENCLOSED_FIELD = '\134'
+DATE_FORMAT = 'AUTO'
+TIMESTAMP_FORMAT = 'AUTO';
+
+create or replace stage sales_stage
+file_format = My_format;
+
+select * from sales;
+drop stage my_stage;
+--undrop stage my_stage;--
+
+
+--unloading data by named-stage --
+
+create or replace file format unload_ff
+type = csv
+field_delimiter = ','
+skip_header = 0
+empty_field_as_null = TRUE ;
+
+create or replace stage int_stage
+file_format = unload_ff;
+
+copy into @int_stage
+from stage1.stage1_schema.restaurant
+overwrite = true
+single = true
+detailed_output = true;
+
+list @int_stage;
+
+--get @int_stage file://C:\Users\HP\Desktop\SNOWFLAKE\data; --
+
+Vaishnavi13#COMPUTE_WH@(no database).(no schema)>use database
+                                                 stage1;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 2.018s
+Vaishnavi13#COMPUTE_WH@STAGE1.PUBLIC>use schema stage1_schema;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 0.246s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>create or replace stage my_stage
+                                            file_format = My_format;
++-------------------------------------------+
+| status                                    |
+|-------------------------------------------|
+| Stage area MY_STAGE successfully created. |
++-------------------------------------------+
+1 Row(s) produced. Time Elapsed: 2.752s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\sales_data.csv @my_stage;
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source         | target            | source_size | target_size | source_compression | target_compression | status   | message |
+|----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| sales_data.csv | sales_data.csv.gz |       21745 |        6752 | NONE               | GZIP               | UPLOADED |         |
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 14.274s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @my_stage;
+100074 (54000): User character length limit (50) exceeded by string 'Sapiens: A Brief History of Humankind by Yuval Noah Harari'
+  File 'sales_data.csv.gz', line 113, character 24
+  Row 112, column "SALES"["PRODUCT_NAME":4]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @my_stage;
++----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                       | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| my_stage/sales_data.csv.gz | LOADED |         240 |         240 |           1 |           0 | NULL        |
+  NULL |                  NULL | NULL                    |
++----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 2.752s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @int_stage file://C:\Users\HP\Desktop\SNOWFLAKE\data;
++------+------+------------+---------+
+| file | size | status     | message |
+|------+------+------------+---------|
+| data | 6718 | DOWNLOADED |         |
++------+------+------------+---------+
+1 Row(s) produced. Time Elapsed: 14.707s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\restaurant_customer_satisfaction.csv @rest_stage;
++--------------------------------------+-----------------------------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source                               | target                                  | source_size | target_size | source_compression | target_compression | status   | message |
+|--------------------------------------+-----------------------------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| restaurant_customer_satisfaction.csv | restaurant_customer_satisfaction.csv.gz |      170899 |       54608 | NONE               | GZIP
+   | UPLOADED |         |
++--------------------------------------+-----------------------------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 13.538s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into resturant from @rest_stage;
+001757 (42601): SQL compilation error:
+Table 'RESTURANT' does not exist
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into restaurant from @rest_stage;
++----------------------------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                                               | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|----------------------------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| rest_stage/restaurant_customer_satisfaction.csv.gz | LOADED |        1500 |        1500 |           1 |           0 | NULL        |             NULL |                  NULL | NULL                    |
++----------------------------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.472s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>list @rest_stage;
++----------------------------------------------------+-------+----------------------------------+------------------------------+
+| name                                               |  size | md5                              | last_modified                |
+|----------------------------------------------------+-------+----------------------------------+------------------------------|
+| rest_stage/restaurant_customer_satisfaction.csv.gz | 54608 | 71f4b4c2f7082d8e7e810671eb37f82f | Thu, 4 Jul 2024 08:38:19 GMT |
++----------------------------------------------------+-------+----------------------------------+------------------------------+
+1 Row(s) produced. Time Elapsed: 0.282s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @int_stage file://C:\Users\HP\Desktop\SNOWFLAKE;
++------+------+------------+---------+
+| file | size | status     | message |
+|------+------+------------+---------|
+| data |    0 | DOWNLOADED |         |
++------+------+------------+---------+
+1 Row(s) produced. Time Elapsed: 13.246s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @int_stage
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| data      |     45840 |      1500 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 2.308s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\sales_data.csv @sales_stage;
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source         | target            | source_size | target_size | source_compression | target_compression | status   | message |
+|----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| sales_data.csv | sales_data.csv.gz |       21745 |        6752 | NONE               | GZIP               | UPLOADED |         |
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 13.238s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @sales_stage;
++-------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                          | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|-------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| sales_stage/sales_data.csv.gz | LOADED |         240 |         240 |           1 |           0 | NULL        |             NULL |
+ NULL | NULL                    |
++-------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.149s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @int_stage
+                                            from stage1.stage1_schema.sales
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| data      |      7002 |       480 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 0.849s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>
+
+Microsoft Windows [Version 10.0.22631.3810]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\HP>snowsql
+Usage: snowsql [OPTIONS]
+
+Options:
+  -a, --accountname TEXT          Name assigned to your Snowflake account. If
+                                  you are not on us-west-2 or AWS deployement,
+                                  append the region and platform to the end,
+                                  e.g., <account>.<region> or
+                                  <account>.<region>.<platform>Honors
+                                  $SNOWSQL_ACCOUNT.
+
+  -u, --username TEXT             Username to connect to Snowflake. Honors
+                                  $SNOWSQL_USER.
+
+  -d, --dbname TEXT               Database to use. Honors $SNOWSQL_DATABASE.
+  -s, --schemaname TEXT           Schema in the database to use. Honors
+                                  $SNOWSQL_SCHEMA.
+
+  -r, --rolename TEXT             Role name to use. Honors $SNOWSQL_ROLE.
+  -w, --warehouse TEXT            Warehouse to use. Honors $SNOWSQL_WAREHOUSE.
+  -h, --host TEXT                 Host address for the connection. Honors
+                                  $SNOWSQL_HOST.
+
+  -p, --port INTEGER              Port number for the connection. Honors
+                                  $SNOWSQL_PORT.
+
+  --region TEXT                   (DEPRECATED) Append the region or any sub
+                                  domains before snowflakecomputing.com to the
+                                  end of accountname parameter after a dot.
+                                  e.g., accountname=<account>.<region>
+
+  -m, --mfa-passcode TEXT         Token to use for multi-factor authentication
+                                  (MFA)
+
+  --mfa-passcode-in-password      Appends the MFA passcode to the end of the
+                                  password.
+
+  --abort-detached-query          Aborts a query if the connection between the
+                                  client and server is lost. By default, it
+                                  won't abort even if the connection is lost.
+
+  --probe-connection              Test connectivity to Snowflake. This option
+                                  is mainly used to print out the TLS/SSL
+                                  certificate chain.
+
+  --proxy-host TEXT               Proxy server hostname. Honors
+                                  $SNOWSQL_PROXY_HOST.
+
+  --proxy-port INTEGER            Proxy server port number. Honors
+                                  $SNOWSQL_PROXY_PORT.
+
+  --proxy-user TEXT               Proxy server username. Honors
+                                  $SNOWSQL_PROXY_USER. Set $SNOWSQL_PROXY_PWD
+                                  for the proxy server password.
+
+  --authenticator TEXT            Authenticator: 'snowflake',
+                                  'externalbrowser' (to use any IdP and a web
+                                  browser), 'oauth', or
+                                  https://<your_okta_account_name>.okta.com
+                                  (to use Okta natively).
+
+  -v, --version                   Shows the current SnowSQL version, or uses a
+                                  specific version if provided as a value.
+
+  --noup                          Disables auto-upgrade for this run. If no
+                                  version is specified for -v, the latest
+                                  version in ~/.snowsql/ is used.
+
+  -D, --variable TEXT             Sets a variable to be referred by &<var>. -D
+                                  tablename=CENUSTRACKONE or --variable
+                                  db_key=$DB_KEY
+
+  -o, --option TEXT               Set SnowSQL options. See the options
+                                  reference in the Snowflake documentation.
+
+  -f, --filename FILE             File to execute.
+  -q, --query TEXT                Query to execute.
+  --config FILE                   Path and name of the SnowSQL configuration
+                                  file. By default, ~/.snowsql/config.
+
+  -P, --prompt                    Forces a password prompt. By default,
+                                  $SNOWSQL_PWD is used to set the password.
+
+  -M, --mfa-prompt                Forces a prompt for the second token for
+                                  MFA.
+
+  -c, --connection TEXT           Named set of connection parameters to use.
+  --single-transaction            Connects with autocommit disabled. Wraps
+                                  BEGIN/COMMIT around statements to execute
+                                  them as a single transaction, ensuring all
+                                  commands complete successfully or no change
+                                  is applied.
+
+  --private-key-path PATH         Path to private key file in PEM format used
+                                  for key pair authentication. Private key
+                                  file is required to be encrypted and
+                                  passphrase is required to be specified in
+                                  environment variable
+                                  $SNOWSQL_PRIVATE_KEY_PASSPHRASE
+
+  -U, --upgrade                   Force upgrade of SnowSQL to the latest
+                                  version.
+
+  -K, --client-session-keep-alive
+                                  Keep the session active indefinitely, even
+                                  if there is no activity from the user..
+
+  --disable-request-pooling       Disable request pooling. This can help speed
+                                  up connection failover
+
+  --token TEXT                    The token to be used with oauth
+                                  authentication method
+
+  --query_tag TEXT                Tags to be applied to the queries run
+  --generate-jwt                  Generate a jwt token, which will be printed
+                                  out and displayed. Requires values for user,
+                                  account, and private-key-path.
+
+  -?, --help                      Show this message and exit.
+
+C:\Users\HP>snowsql -a IMJRACA-YH39405 -u Vaishnavi13
+Password:
+* SnowSQL * v1.3.1
+Type SQL statements or !help
+Vaishnavi13#COMPUTE_WH@(no database).(no schema)>use database
+                                                 stage1;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 2.018s
+Vaishnavi13#COMPUTE_WH@STAGE1.PUBLIC>use schema stage1_schema;
++----------------------------------+
+| status                           |
+|----------------------------------|
+| Statement executed successfully. |
++----------------------------------+
+1 Row(s) produced. Time Elapsed: 0.246s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>create or replace stage my_stage
+                                            file_format = My_format;
++-------------------------------------------+
+| status                                    |
+|-------------------------------------------|
+| Stage area MY_STAGE successfully created. |
++-------------------------------------------+
+1 Row(s) produced. Time Elapsed: 2.752s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\sales_data.csv @my_stage;
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source         | target            | source_size | target_size | source_compression | target_compression | status   | message |
+|----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| sales_data.csv | sales_data.csv.gz |       21745 |        6752 | NONE               | GZIP               | UPLOADED |         |
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 14.274s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @my_stage;
+100074 (54000): User character length limit (50) exceeded by string 'Sapiens: A Brief History of Humankind by Yuval Noah Harari'
+  File 'sales_data.csv.gz', line 113, character 24
+  Row 112, column "SALES"["PRODUCT_NAME":4]
+  If you would like to continue loading when an error is encountered, use other values such as 'SKIP_FILE' or 'CONTINUE' for the ON_ERROR option. For more information on loading options, please run 'info loading_data' in a SQL client.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @my_stage;
++----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                       | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| my_stage/sales_data.csv.gz | LOADED |         240 |         240 |           1 |           0 | NULL        |
+  NULL |                  NULL | NULL                    |
++----------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 2.752s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @int_stage file://C:\Users\HP\Desktop\SNOWFLAKE\data;
++------+------+------------+---------+
+| file | size | status     | message |
+|------+------+------------+---------|
+| data | 6718 | DOWNLOADED |         |
++------+------+------------+---------+
+1 Row(s) produced. Time Elapsed: 14.707s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\restaurant_customer_satisfaction.csv @rest_stage;
++--------------------------------------+-----------------------------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source                               | target                                  | source_size | target_size | source_compression | target_compression | status   | message |
+|--------------------------------------+-----------------------------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| restaurant_customer_satisfaction.csv | restaurant_customer_satisfaction.csv.gz |      170899 |       54608 | NONE               | GZIP
+   | UPLOADED |         |
++--------------------------------------+-----------------------------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 13.538s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into resturant from @rest_stage;
+001757 (42601): SQL compilation error:
+Table 'RESTURANT' does not exist
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into restaurant from @rest_stage;
++----------------------------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                                               | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|----------------------------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| rest_stage/restaurant_customer_satisfaction.csv.gz | LOADED |        1500 |        1500 |           1 |           0 | NULL        |             NULL |                  NULL | NULL                    |
++----------------------------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.472s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>list @rest_stage;
++----------------------------------------------------+-------+----------------------------------+------------------------------+
+| name                                               |  size | md5                              | last_modified                |
+|----------------------------------------------------+-------+----------------------------------+------------------------------|
+| rest_stage/restaurant_customer_satisfaction.csv.gz | 54608 | 71f4b4c2f7082d8e7e810671eb37f82f | Thu, 4 Jul 2024 08:38:19 GMT |
++----------------------------------------------------+-------+----------------------------------+------------------------------+
+1 Row(s) produced. Time Elapsed: 0.282s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @int_stage file://C:\Users\HP\Desktop\SNOWFLAKE;
++------+------+------------+---------+
+| file | size | status     | message |
+|------+------+------------+---------|
+| data |    0 | DOWNLOADED |         |
++------+------+------------+---------+
+1 Row(s) produced. Time Elapsed: 13.246s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @int_stage
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| data      |     45840 |      1500 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 2.308s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>put file://C:\Users\HP\Desktop\SNOWFLAKE\sales_data.csv @sales_stage;
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+| source         | target            | source_size | target_size | source_compression | target_compression | status   | message |
+|----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------|
+| sales_data.csv | sales_data.csv.gz |       21745 |        6752 | NONE               | GZIP               | UPLOADED |         |
++----------------+-------------------+-------------+-------------+--------------------+--------------------+----------+---------+
+1 Row(s) produced. Time Elapsed: 13.238s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into sales from @sales_stage;
++-------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+| file                          | status | rows_parsed | rows_loaded | error_limit | errors_seen | first_error | first_error_line | first_error_character | first_error_column_name |
+|-------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------|
+| sales_stage/sales_data.csv.gz | LOADED |         240 |         240 |           1 |           0 | NULL        |             NULL |
+ NULL | NULL                    |
++-------------------------------+--------+-------------+-------------+-------------+-------------+-------------+------------------+-----------------------+-------------------------+
+1 Row(s) produced. Time Elapsed: 1.149s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @int_stage
+                                            from stage1.stage1_schema.sales
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| data      |      7002 |       480 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 0.849s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @tf_stage
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| data      |     45840 |      1500 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 2.490s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @%tf_stage
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
+002003 (02000): SQL compilation error:
+Stage 'STAGE1.STAGE1_SCHEMA."%TF_STAGE"' does not exist or not authorized.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @%tf file://C:\Users\HP\Desktop\SNOWFLAKE;
+002003 (02000): SQL compilation error:
+Stage 'STAGE1.STAGE1_SCHEMA."%TF"' does not exist or not authorized.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @%tf_stage file://C:\Users\HP\Desktop\SNOWFLAKE;
+002003 (02000): SQL compilation error:
+Stage 'STAGE1.STAGE1_SCHEMA."%TF_STAGE"' does not exist or not authorized.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into ~/staged
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
+001003 (42000): SQL compilation error:
+syntax error line 1 at position 10 unexpected '~'.
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @~/staged
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
+
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| staged    |     45840 |      1500 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 0.828s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @~/staged file://C:\Users\HP\Desktop\SNOWFLAKE\data;
++---------------------------+-------+------------+---------+
+| file                      |  size | status     | message |
+|---------------------------+-------+------------+---------|
+| STUDENT1.csv.gz           |   124 | DOWNLOADED |         |
+| food.csv.gz               |   817 | DOWNLOADED |         |
+| onlinedeliverydata.csv.gz | 20774 | DOWNLOADED |         |
+| staged                    | 45840 | DOWNLOADED |         |
++---------------------------+-------+------------+---------+
+4 Row(s) produced. Time Elapsed: 22.601s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>copy into @%restaurant
+                                            from stage1.stage1_schema.restaurant
+                                            overwrite = true
+                                            single = true
+                                            detailed_output = true;
+
++-----------+-----------+-----------+
+| FILE_NAME | FILE_SIZE | ROW_COUNT |
+|-----------+-----------+-----------|
+| data      |     45840 |      1500 |
++-----------+-----------+-----------+
+1 Row(s) produced. Time Elapsed: 0.791s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>get @%restaurant file://C:\Users\HP\Desktop\SNOWFLAKE\data;
++------+-------+------------+---------+
+| file |  size | status     | message |
+|------+-------+------------+---------|
+| data | 45840 | DOWNLOADED |         |
++------+-------+------------+---------+
+1 Row(s) produced. Time Elapsed: 12.100s
+Vaishnavi13#COMPUTE_WH@STAGE1.STAGE1_SCHEMA>
+
+use database stage1;
+use schema stage1_schema;
+
+--Loading data by named-stage --
+create or replace table restaurant (CustomerID number,Age number,Gender varchar(500),Income int,VisitFrequency varchar(500),	AverageSpend float,PreferredCuisine varchar(500),TimeOfVisit varchar(500),GroupSize	number,DiningOccasion varchar(500),MealType	varchar(500),OnlineReservation number,DeliveryOrder number,	LoyaltyProgramMember number,WaitTime float,	ServiceRating number,FoodRating	number,AmbianceRating number,HighSatisfaction number);
+
+create or replace file format My_format
+TYPE = 'CSV'
+COMPRESSION = 'AUTO'
+FIELD_DELIMITER = ','
+RECORD_DELIMITER = '\n'
+SKIP_HEADER = 1
+FIELD_OPTIONALLY_ENCLOSED_BY = '\042'
+TRIM_SPACE = FALSE
+ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
+ESCAPE = 'NONE'
+ESCAPE_UNENCLOSED_FIELD = '\134'
+DATE_FORMAT = 'AUTO'
+TIMESTAMP_FORMAT = 'AUTO';
+
+create or replace stage sales_stage
+file_format = My_format;
+
+select * from sales;
+drop stage my_stage;
+--undrop stage my_stage;--
+
+
+--unloading data by named-stage --
+
+create or replace file format unload_ff
+type = csv
+field_delimiter = ','
+skip_header = 0
+empty_field_as_null = TRUE ;
+
+create or replace stage int_stage
+file_format = unload_ff;
+
+copy into @int_stage
+from stage1.stage1_schema.restaurant
+overwrite = true
+single = true
+detailed_output = true;
+
+list @int_stage;
+
+--get @int_stage file://C:\Users\HP\Desktop\SNOWFLAKE\data; --
+
+
+--unload data by table--
+
+create or replace file format unload_ff_tf
+type = csv
+field_delimiter = ','
+skip_header = 0
+empty_field_as_null = TRUE ;
+
+copy into @restaurant
+from stage1.stage1_schema.restaurant
+overwrite = true
+single = true
+detailed_output = true;
+
+--unload data be user--
+
+create or replace file format unload_ff_uf
+type = csv
+field_delimiter = ','
+skip_header = 0
+empty_field_as_null = TRUE ;
+
+drop stage tf_stage;
+drop stage uf_stage;
+
+copy into @~/staged
+from stage1.stage1_schema.restaurant
+overwrite = true
+single = true
+detailed_output = true;
+
+list @~/staged;
+
+
+
+===============================Session5-T1(External data load)=========================================
+Steps on Snowflake :
+
+use database stage1;
+use schema stage1_schema;
+create storage integration aws_sf_data1
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = S3
+ENABLED = TRUE
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::992382400457:role/snowflake_role'
+STORAGE_ALLOWED_LOCATIONS= ('s3://snowflatebucket/snowflackefolder/');
+
+desc integration aws_sf_data1;
+(copy the 5th(ARN) and 7th(ExternalID))
+
+
+Steps on AWS:
+
+1.create account on AWS free tier
+2.search IAM in that create role
+	a)click on AWS account
+	b)click on checkbox(externalID 5digit)
+	c)next
+	d)Add Permission(A S3 full Access)
+	e)next
+	f)rolename
+	g)description(optional)
+	f)click on crate role (copy the url of role to paste it in snwonflake i.e Role_ARN)
+
+3.create bucket and also folder in it (copy the s3 url of it to paste  on the snowflake i.e Allowed_location)
+
+4.click on IAM,Role,Trust relationship,edit(here paste the ARN and ExternalID that caopy from snowflake i.e 5th and 7th)
+5.update
+6.now the aws and snowflake will be connected.
+
+7.Now upload CSV file in the AWS Bucket and create table of it on Snowflake
+8.create file format on snowflake
+9.create stage
+10.list @stage
+11. copy into table from @stage
+
+refer below code (example):
+
+use database stage1;
+use schema stage1_schema;
+
+create or replace table weather(Temperature number,Humidity number,Wind_Speed float,Precipitation number,Cloud_Cover varchar(100),Atmospheric_Pressure float,UV_Index number,Season varchar(100),Visibility float,Location varchar(100),Weather_Type varchar(100));
+
+create storage integration aws_sf_data1
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = S3
+ENABLED = TRUE
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::992382400457:role/snowflake_role'
+STORAGE_ALLOWED_LOCATIONS= ('s3://snowflatebucket/snowflackefolder/');
+
+desc integration aws_sf_data1;
+
+create or replace file format My_format
+TYPE = 'CSV'
+COMPRESSION = 'AUTO'
+FIELD_DELIMITER = ','
+RECORD_DELIMITER = '\n'
+SKIP_HEADER = 1
+FIELD_OPTIONALLY_ENCLOSED_BY = '\042'
+TRIM_SPACE = FALSE
+ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
+ESCAPE = 'NONE'
+ESCAPE_UNENCLOSED_FIELD = '\134'
+DATE_FORMAT = 'AUTO'
+TIMESTAMP_FORMAT = 'AUTO';
+
+create or replace stage weather_aws_stage
+url = 's3://snowflatebucket/snowflackefolder/'
+storage_integration = aws_sf_data1
+file_format = My_format;
+
+list @weather_aws_stage;
+
+copy into weather from @weather_aws_stage;
+
+select * from weather;
+
+=====================================Session5-T2==================================================
+
+[14:08, 05/07/2024] +91 96996 09927: CREATE FILE FORMAT csv_load_format1
+    TYPE = 'CSV'
+    COMPRESSION = 'AUTO'
+    FIELD_DELIMITER = ','
+    RECORD_DELIMITER = '\n'
+    SKIP_HEADER =1
+    FIELD_OPTIONALLY_ENCLOSED_BY = '\042'
+    TRIM_SPACE = FALSE
+    ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE
+    ESCAPE = 'NONE'
+    ESCAPE_UNENCLOSED_FIELD = '\134'
+    DATE_FORMAT = 'AUTO'
+    TIMESTAMP_FORMAT = 'AUTO';
+[14:35, 05/07/2024] +91 94238 73130: formatTypeOptions ::=
+-- If TYPE = CSV
+     COMPRESSION = AUTO | GZIP | BZ2 | BROTLI | ZSTD | DEFLATE | RAW_DEFLATE | NONE
+     RECORD_DELIMITER = '<character>' | NONE
+     FIELD_DELIMITER = '<character>' | NONE
+     FILE_EXTENSION = '<string>'
+     PARSE_HEADER = TRUE | FALSE
+     SKIP_HEADER = <integer>
+     SKIP_BLANK_LINES = TRUE | FALSE
+     DATE_FORMAT = '<string>' | AUTO
+     TIME_FORMAT = '<string>' | AUTO
+     TIMESTAMP_FORMAT = '<string>' | AUTO
+     BINARY_FORMAT = HEX | BASE64 | UTF8
+     ESCAPE = '<character>' | NONE
+     ESCAPE_UNENCLOSED_FIELD = '<character>' | NONE
+     TRIM_SPACE = TRUE | FALSE
+     FIELD_OPTIONALLY_ENCLOSED_BY = '<character>' | NONE
+     NULL_IF = ( '<string>' [ , '<string>' ... ] )
+     ERROR_ON_COLUMN_COUNT_MISMATCH = TRUE | FALSE
+     REPLACE_INVALID_CHARACTERS = TRUE | FALSE
+     EMPTY_FIELD_AS_NULL = TRUE | FALSE
+     SKIP_BYTE_ORDER_MARK = TRUE | FALSE
+     ENCODING = '<string>' | UTF8
+
+
+use database stage1;
+use schema stage1_schema;
+
+create or replace table weather(Temperature number,Humidity number,Wind_Speed float,Precipitation number,Cloud_Cover varchar(100),Atmospheric_Pressure float,UV_Index number,Season varchar(100),Visibility float,Location varchar(100),Weather_Type varchar(100));
+
+create storage integration aws_sf_data1
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = S3
+ENABLED = TRUE
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::992382400457:role/snowflake_role'
+STORAGE_ALLOWED_LOCATIONS= ('s3://snowflatebucket/snowflackefolder/');
+
+desc integration aws_sf_data1;
+
+create or replace file format My_format
+TYPE = 'CSV'
+COMPRESSION = 'AUTO'
+FIELD_DELIMITER = ','
+RECORD_DELIMITER = '\n'
+SKIP_HEADER = 1
+FIELD_OPTIONALLY_ENCLOSED_BY = '\042'
+TRIM_SPACE = FALSE
+ERROR_ON_COLUMN_COUNT_MISMATCH = FALSE
+ESCAPE = 'NONE'
+ESCAPE_UNENCLOSED_FIELD = '\134'
+DATE_FORMAT = 'AUTO'
+TIMESTAMP_FORMAT = 'AUTO';
+
+create or replace stage weather_aws_stage
+url = 's3://snowflatebucket/snowflackefolder/weather.csv'
+storage_integration = aws_sf_data1
+file_format = My_format;
+
+list @weather_aws_stage;
+
+copy into weather from @weather_aws_stage;
+
+select * from weather;
+
+--unloading data--
+
+create or replace file format unload_ex_ff
+type = 'csv'
+field_delimiter = '|'
+skip_header = 0
+empty_field_as_null = true
+parse_header = true;
+
+create or replace stage unload_ex_stage
+url = 's3://snowflatebucket/snowflackefolder/unload_snowflake/'
+storage_integration = aws_sf_data1
+file_format = unload_ex_ff;
+
+copy into @unload_ex_stage from stu_performance;
+
+list @unload_ex_stage;
+
+==========================Session6-T1===========================================
+Snowpipe:
+steps on snowflake:
+1.create stage
+2.crete pipe
+3.show pipes(copy the notification channel)
+4.alter command
+5.select command
+
+steps on AWS:
+1.in S3 bucket goes into properties section then create event in that click on SQS queue ARN and paste the notification channel here.
+
+refer the following code:
+
+use database stage1;
+use schema stage1_schema;
+
+select * from weather;
+select * from sales;
+select * from restaurant;
+select * from stu_performance;
+
+truncate table weather;
+truncate table sales;
+
+create storage integration aws_sf_data1
+TYPE = EXTERNAL_STAGE
+STORAGE_PROVIDER = S3
+ENABLED = TRUE
+STORAGE_AWS_ROLE_ARN = 'arn:aws:iam::992382400457:role/snowflake_role'
+STORAGE_ALLOWED_LOCATIONS= ('s3://snowflatebucket/snowflackefolder/');
+
+desc integration aws_sf_data1;
+
+alter storage integration aws_sf_data1
+set storage_allowed_locations=('s3://snowflatebucket/');
+
+create or replace stage sales_stage
+url = 's3://snowflatebucket/unload_snowflake/sales_data.csv'
+storage_integration = aws_sf_data1
+file_format = My_format;
+
+list @sales_stage;
+
+create or replace pipe sales_pipe auto_ingest = true as copy into stage1.stage1_schema.sales from @sales_stage ON_Error = continue;
+
+show pipes;
+
+select * from stage1.stage1_schema.sales;
+
+--SYSTEMSPIPE_FORCE_RESUME('sales_pipe');
+
+ALTER PIPE sales_pipe SET PIPE_EXECUTION_PAUSED = false;
+
+==========================Session6-T2(streams)==========================================
+
+use database student;
+use schema student.student_schema;
+select * from students;
+
+create or replace stream students_stream on table students;
+select * from students_stream;
+insert into students values (10,'vaishnavi','mapari',90);
+delete from students where first_name='RAHUL' and last_name='PANDE';
+update students set roll_no=9 where last_name='SHARMA';
+
+ROLL_NO	FIRST_NAME	LAST_NAME	MARKS	METADATA$ACTION	METADATA$ISUPDATE	METADATA$ROW_ID
+7	SHEETAL	VARMA	80	INSERT	TRUE	2c12167f2c7c8b8f81fb1286099ddb68dd28fe39
+8	RADIKA	CHAVAN	90	INSERT	TRUE	ac0d80abaa66cf6234374a8f2cceea547917d3e0
+9	KOMAL	SHARMA	40	INSERT	TRUE	58a604a2695bcfa11ad89ff35a44950122a72ff1
+10	vaishnavi	mapari	90	INSERT	FALSE	7d89e70bd443ef2a6317266bfc66f6d5f3fcaca9
+2	SHEETAL	VARMA	80	DELETE	TRUE	2c12167f2c7c8b8f81fb1286099ddb68dd28fe39
+3	RADIKA	CHAVAN	90	DELETE	TRUE	ac0d80abaa66cf6234374a8f2cceea547917d3e0
+4	KOMAL	SHARMA	40	DELETE	TRUE	58a604a2695bcfa11ad89ff35a44950122a72ff1
+1	RAHUL	PANDE	70	DELETE	FALSE	38e364f1f60e1c829614932b86f7742c3abab18d
+
+
+
+use database student;
+use schema student.student_schema;
+select * from students;
+
+create or replace stream students_stream on table students;
+select * from students_stream;
+insert into students values (10,'vaishnavi','mapari',90);
+delete from students where first_name='RAHUL' and last_name='PANDE';
+update students set roll_no=9 where last_name='SHARMA';
+
+create or replace stream student_append_stream on table students append_only = true;
+insert into students values (11,'Ajay','karat',90);
+select * from student_append_stream;
+delete from students where roll_no=10;
+
+
+==============================================SESSION7-T1===================================================
+
+TANSFER THE DATA FROM STREAM INTO THE TARGET TABLE , REFER THE FOLLOWING STEPS:
+--SESSION_7-T1--
+
+
+--THE DATA TRANSFER FROM STEAM FROM TARGET TABLE--
+
+create database DB;
+create schema DB.DB_schema;
+create or replace table DB.DB_schema.emp_source (empid int, empname varchar(50),salary float, age int, dept varchar(50), location varchar(50));
+
+create or replace table emp_target as select * from emp_source;
+
+create or replace stream emp_stream on table emp_source;
+
+insert into emp_source values (6,'ashu',55000,25,'HR','hyderabad');
+delete from emp_source where empid=4;
+update emp_source set empname='ram' where empid=3;
+
+
+select * from emp_source;
+select * from emp_stream;
+
+insert into emp_target select empid, empname,salary,age,dept,location from emp_stream 
+where METADATA$ACTION = 'INSERT' AND METADATA$ISUPDATE = FALSE;
+
+DELETE FROM emp_target 
+WHERE empid IN (
+    SELECT empid 
+    FROM emp_stream 
+    WHERE METADATA$ACTION = 'DELETE' AND METADATA$ISUPDATE = FALSE
+);
+
+MERGE INTO EMP_TARGET ET USING EMP_STREAM ES ON ET.EMPID = ES.EMPID 
+WHEN MATCHED AND METADATA$ACTION = 'DELETE' AND METADATA$ISUPDATE = 'FALSE' THEN DELETE;
+
+MERGE INTO EMP_TARGET ET USING EMP_STREAM ES ON ET.EMPID = ES.EMPID 
+WHEN MATCHED AND METADATA$ACTION = 'INSERT' AND METADATA$ISUPDATE = 'TRUE' THEN UPDATE
+SET ET.EMPNAME = ES.EMPNAME;
+
+MERGE INTO EMP_TARGET ET USING EMP_STREAM ES ON ET.EMPID = ES.EMPID 
+WHEN NOT MATCHED AND METADATA$ACTION = 'INSERT' AND METADATA$ISUPDATE = 'FALSE' THEN INSERT (EMPID,EMPNAME,SALARY,AGE,DEPT,LOCATION) VALUES (ES.EMPID,ES.EMPNAME,ES.SALARY,ES.AGE,ES.DEPT,ES.LOCATION);
+
+
+select * from emp_target;
+select * from emp_stream;
+
+
+=================================================Session_8-T1=======================================
+
+--Session_8-T1--
+create database Stream_task;
+create schema Stream_task_schema;
+
+create or replace table emp_source1 (emp_id int, emp_name varchar(30), location varchar(20));
+
+create or replace table emp_target1 (emp_id int, emp_name varchar(30), location varchar(20));
+
+create or replace stream emp_stream3 on table emp_source1;
+
+insert into emp_source1 values (2,'ankita','Hydrabaad'),(6,'Ankita','Pune'),(7,'sonali','Delhi');
+delete from emp_source1 where emp_id=7;
+update emp_source1 set emp_name='ram' where emp_id=2;
+
+
+create or replace task emp_task5
+warehouse = compute_wh
+schedule = '1 minute'
+when system$stream_has_data('STREAM_TASK.STREAM_TASK_SCHEMA.EMP_STREAM3')
+as
+merge into emp_target1 et using emp_stream3 es on et.emp_id = es.emp_id  --     9=9
+
+when matched and metadata$action = 'DELETE' and metadata$isupdate = FALSE then delete 
+
+when matched and metadata$action = 'INSERT' and metadata$isupdate = 'TRUE' then update set et.emp_name = es.emp_name, et.location = es.location
+
+when not matched and metadata$action = 'INSERT' and metadata$isupdate = 'FALSE' then insert (emp_id, emp_name, location) values (es.emp_id, es.emp_name, es.location);
+
+
+show tasks;
+alter task emp_task5 resume;
+
+SELECT * FROM EMP_SOURCE1;
+SELECT * FROM EMP_STREAM3;
+SELECT * FROM EMP_TARGET1;
+
+============================Session_8-T2======================================================
+
+create database aws;
+create schema aws_schema;
+
+create or replace  table food_source (
+	AGE NUMBER(38,0),
+	GENDER VARCHAR(50),
+	MARITAL_STATUS VARCHAR(50),
+	OCCUPATION VARCHAR(100)
+);
+create or replace table food_target as select * from food_source;
+
+create or replace file format unloadind_ff
+type ='csv',
+field_delimiter = '1',
+skip_header = 0,
+empty_field_as_null= true,
+parse_header = true;
+
+create or replace storage integration aws_sf_data_01
+type=external_stage
+storage_provider = s3
+enabled=true
+storage_aws_role_arn='arn:aws:iam::992382400457:role/snowflake_role'
+storage_allowed_locations=('s3://snowflake-aws-bucekt/');
+
+desc integration aws_sf_data_01;
+
+create or replace stage food_stage
+storage_integration = aws_sf_data_01
+url = 's3://snowflake-aws-bucekt/food-folder/'
+file_format = STUDENT.STUDENT_SCHEMA.MY_FORMAT;
+
+alter storage integration aws_sf_data_01
+set storage_allowed_locations=('s3://snowflake-aws-bucekt/');
+
+
+list @food_stage;
+
+create or replace pipe food_pipe auto_ingest = true as
+copy into AWS.AWS_SCHEMA.FOOD_SOURCE from
+@food_stage on_error = continue;
+
+show pipes;
+
+select * from AWS.AWS_SCHEMA.FOOD_SOURCE;
+
+create or replace stream food_stream on table food_source;
+
+create or replace task food_task
+warehouse = compute_wh
+schedule = '1 minute'
+when system$stream_has_data('AWS.AWS_SCHEMA.FOOD_STREAM')
+as
+merge into food_target et using food_stream es on et.age = es.age  
+when not matched and metadata$action = 'INSERT' and metadata$isupdate = 'FALSE' then insert (AGE ,GENDER,MARITAL_STATUS ,
+OCCUPATION ) values (es.age, es.gender, es.marital_status,occupation);
+
+show tasks;
+alter task food_task resume;
+
+SELECT * FROM FOOD_SOURCE;
+SELECT * FROM food_STREAM;
+SELECT * FROM food_TARGET;
+
+truncate table food_source;
+truncate table food_target;
+
+
+===================================================SESSION_9-T1=============================================
+
+--SESSION_9-T1--
+
+use database student;
+use schema student_schema;
+create or replace procedure output_message(message varchar)
+returns varchar not null 
+language sql
+as
+$$
+begin
+    return message;
+end;
+$$
+;
+
+call output_message('Hello world. Welcome to the sky universe');
+
+// addition of number
+create or replace procedure add(a number, b number)
+returns number not null 
+language sql
+as
+$$
+begin
+    return a+b;
+end;
+$$
+;
+
+call add(4,5);
+
+-- greater number
+
+create or replace procedure add(a number, b number)
+returns number 
+language SQL
+as
+$$
+begin
+    if (a>b) THEN
+    return a;
+    else
+    return b;
+    END IF;
+end;
+$$
+;
+
+call add(4,5);
+
+create or replace table employee(emp_id int, empname varchar, job_title varchar, salary number);
+insert into employee values(1,'vaishnavi', 'manager', 65500),
+(2, 'akansha', 'hr', 56000),
+(3, 'sidhhi', 'sales', 59000),
+(4, 'shruti', 'desginer', 60000);
+
+select * from employee;
+
+create or replace procedure update_emp_salary1(id int, new_salary number)
+returns string
+LANGUAGE SQL
+as
+$$
+begin 
+    update employee
+    set salary =: new_salary
+    where emp_id =: id;
+
+    return 'updated successful';
+end;
+$$;
+
+call update_emp_salary1(1, 70000);
+--drop procedure update_emp_salary(id int, salary number);
+
+CREATE OR REPLACE  procedure insert_employee(
+    p_emp_id INT,
+    p_empname VARCHAR,
+    p_job_title VARCHAR,
+    p_salary NUMERIC
+)
+RETURNS VARCHAR NOT NULL
+LANGUAGE sql
+AS $$
+BEGIN
+    INSERT INTO employee (emp_id, empname, job_title, salary)
+    VALUES (p_emp_id, p_empname, p_job_title, p_salary);
+
+    RETURN 'Insert Successful';
+END;
+$$;
+
+
+==========================================================SESSION_9-T2====================================================
+
+--SESSION_9-T2--
+
+create database procedure1;
+create schema procedure1_schema;
+
+CREATE OR REPLACE TABLE SOURCE_TABLE (ID NUMBER, NAME VARCHAR(30));
+
+CREATE OR REPLACE TABLE TARGET_TABLE AS SELECT * FROM SOURCE_TABLE;
+
+INSERT INTO SOURCE_TABLE VALUES (4,'AMIT'),(5,'GANESH'),(6,'RADHA');
+
+--COPY SOURCE DATA INTO TARGET DATA BY PROCEDURE--
+
+CREATE OR REPLACE procedure copy_data()
+RETURNS VARCHAR
+LANGUAGE sql
+AS $$
+BEGIN
+    INSERT INTO TARGET_TABLE (ID, NAME)
+    SELECT * FROM SOURCE_TABLE;
+
+    RETURN 'DATA COPIED SUCCESSFULLY';
+END;
+$$;
+
+CALL COPY_DATA();
+SELECT * FROM SOURCE_TABLE;
+SELECT * FROM TARGET_TABLE;
+
+--RETURN TABLE--
+
+CREATE OR REPLACE PROCEDURE FIND_TABLE( ID VARCHAR)
+RETURNS TABLE (ID NUMBER, NAME VARCHAR(30))
+LANGUAGE SQL
+AS $$
+DECLARE
+RES RESULTSET DEFAULT ( SELECT * FROM SOURCE_TABLE WHERE ID = ID);
+BEGIN
+RETURN TABLE(RES);
+END;
+$$
+;
+
+CALL FIND_TABLE(1);
+
+
+================================session_9-T2 (procedure call into another procedure)===================================
+
+--Session_9-T2 --
+
+--PROCEDURE CALL IN ANOTHER PROCEDURE--
+
+use database procedure1;
+use schema procedure1_schema;
+
+
+-- Calling a Stored Procedure From Another Stored Procedure
+
+-- Create a table for use in the example.
+CREATE OR REPLACE TABLE int_table (value INTEGER);
+
+-- Create a stored procedure to be called from another stored procedure.
+CREATE OR REPLACE PROCEDURE insert_value(value INTEGER)
+RETURNS VARCHAR NOT NULL
+LANGUAGE SQL
+AS
+$$
+BEGIN
+  INSERT INTO int_table VALUES (:value);
+  RETURN 'Rows inserted: ' || SQLROWCOUNT;
+END;
+$$
+;
+
+-- create a second stored procedure that calls the first stored procedure:
+CREATE OR REPLACE PROCEDURE insert_two_values(value1 INTEGER, value2 INTEGER)
+RETURNS VARCHAR NOT NULL
+LANGUAGE SQL
+AS
+$$
+BEGIN
+  CALL insert_value(:value1);
+  CALL insert_value(:value2);
+  RETURN 'Finished calling stored procedures';
+END;
+$$
+;
+
+-- calling
+CALL insert_two_values(6, 7);
+
+
+select * from int_table;
+
+
+=============================================Session_10-T1===============================================
+
+How to create Snowflake UDFs(User Define Function)?
+
+UDF is use to only select the data not for manupulating the data. For data manupulation use the procedure.
+
+Syntax of UDF:
+
+	create or replace function <name> (<arg_name> <arg_datatype>)
+	returns <result_dataype>
+	language sql
+	as
+	$$
+	<action_code>
+	$$
+	; 
+
+Type of UDF:
+	1.Scalar Snowflake UDF
+	2.Tabular Snowflake UDF
+
+For calling function use select key word and for procedure use call <procedure_name>
+
+A scalar function (UDF) returns one output row for each input row. The returned row consists of a single column/value.
+
+A tabular function (UDTF) returns a tabular value for each input row. In the handler for a UDTF, you write methods that conform to an interface required by Snowflake. These methods will:
+	1.Process each row in a partition (required).
+
+	2.Initialize the handler once for each partition (optional).
+
+	3.Finalize processing for each partition (optional).
+
+example:
+
+--Session_10-T1 UDFs --
+
+use database procedure1;
+use schema procedure1_schema;
+
+-- create function to concatinate the names--
+
+create or replace function ConctNames(
+  first_name string,
+  last_name string
+)
+returns string
+language javascript
+as $$
+return arguments[0].concat(arguments[1]);
+$$
+;
+
+select ConctNames('Aryan', 'Khan');
+
+-- create function to calculate average --
+
+create or replace TABLE STUDENTS (
+	ROLL_NO NUMBER(38,0),
+	FIRST_NAME VARCHAR(20),
+	LAST_NAME VARCHAR(20),
+	MARKS NUMBER(38,0)
+);
+
+insert into students values(1,'Rahul','Sharma',90),(2,'Aryan','Khana',80),(3,'Gopal','Sir',70);
+
+create or replace function get_average()
+returns number
+language sql
+as $$
+select avg(marks) from students
+$$
+;
+
+select get_average();
+
+--insert data from one table to another by procedure using javascript--
+
+select * from source_table;
+select * from target_table;
+truncate table target_table;
+
+create or replace procedure insert_table()
+  returns string
+  language javascript
+  execute as caller
+as
+$$
+  var tableName = 'TARGET_TABLE';
+  var sql_query = `INSERT INTO ${tableName} (id, name) SELECT id, name FROM source_table`;
+  
+  var statement1 = snowflake.createStatement({sqlText: sql_query});
+  
+  try {
+    var resultSet1 = statement1.execute();
+    return 'Data insert successful';
+  } catch (err) {
+    return 'Error: ' + err.message;
+  }
+$$;
+
+call insert_table();
+
+
+
+=====================================Final Expert Talk==============================================
+
+Speaker name : Suresh Kushalwal
+Talk about snowflake , how it will be use in industry. Work in marcel company.
+
+data movement, bring the code into the data in happen in hadoop so it was difficult then snowflake is introduce to over come these feature, in snowfalke there is no need of data movement just want to write the code in it.
+
+
+merkle
+sos(single sign on)
+jira(atlad product)
+dentos
+PIA data (personally identify data)
+bitbucket
+mail notification
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

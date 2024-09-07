@@ -1,0 +1,32 @@
+-- CREATE table student ( roll_no number, first_name char(20), last_name char(20));
+
+--Alter table student 
+--ADD marks int (20);
+
+-- Desc student;
+
+--Alter table student
+--Modify COLUMN last_name varchar (20);
+
+--Alter table student
+--drop COLUMN marks;
+
+--Alter table student
+--rename roll_no to roll_number;
+
+--Insert into student values(1,'Ajay','Sharma');
+--Insert into student values (4,'Bhim','Pande');
+--select * from student;
+
+--Alter table student
+--add full_name varchar(50);
+
+--select * ,CONCAT(first_name, last_name) AS full_name 
+--from student;
+
+--update student
+--set first_name='Rahul'
+--where roll_number=3;
+
+--delete from student
+--where roll_number=3;
